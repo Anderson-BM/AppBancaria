@@ -10,12 +10,14 @@ React + Vite, CSS normal (sin Tailwind) y organizada por módulos.
 src/
   modules/
     auth/        -> login por PIN (Login.jsx, useAuth.js)
-    cards/        -> tarjeta flotante, selector y formulario (imagen, límite, fechas)
+    cards/        -> tarjeta flotante, selector y formulario (imagen HD, límite, fechas)
     expenses/     -> formulario de gastos, tabla y selector de mes
     dashboard/    -> resumen (gastado/disponible), progreso y desglose por categoría
-  components/      -> piezas compartidas (Modal)
+    fixed/        -> página de Gastos Fijos: tabla, límite y gráfica de pastel
+  components/      -> piezas compartidas (Modal, EditableName, BottomNav)
+  hooks/           -> useTheme (modo claro/oscuro)
   storage/         -> toda la persistencia (hoy en localStorage)
-  utils/           -> formato de moneda, fechas, helpers
+  utils/           -> formato de moneda/fechas, categorías, procesamiento de imagen (image.js)
 ```
 
 Cada carpeta de `modules` trae su propio `.css`. Si mañana quieres cambiar a un
@@ -35,9 +37,18 @@ de dónde vienen los datos.
   uno tiene su propia copia. Usa el botón ⬇ (arriba a la derecha) para
   descargar un respaldo en JSON cuando quieras.
 - **Tarjetas:** puedes agregar varias, cada una con su imagen, límite ("no
-  pasarme"), día de corte y día de pago. Tócala para editarla.
+  pasarme"), día de corte y día de pago. Tócala para editarla. Al subir una
+  foto, se recorta y reescala automáticamente en HD a la proporción de una
+  tarjeta real, para que nunca se vea deformada ni se desborde.
 - **Gastos:** se registran por tarjeta y por fecha; el selector de mes te deja
   moverte entre meses anteriores sin perder el historial.
+- **Gastos fijos:** en la pestaña "Gastos Fijos" (abajo) llevas tus gastos
+  recurrentes (renta, servicios, suscripciones) con su propio límite y una
+  gráfica de pastel sencilla por categoría.
+- **Tu nombre:** toca el nombre en la parte de arriba para editarlo como
+  quieras — se guarda automáticamente.
+- **Modo claro/oscuro:** el botón ☀/🌙 alterna el tema y recuerda tu
+  preferencia.
 
 ## Requisitos
 
@@ -70,18 +81,50 @@ para subir a cualquier servidor.
 
 ## Desplegar en tu server
 
-Como es una SPA 100% estática, solo necesitas servir la carpeta `dist/`:
+El proyecto ya incluye un `Dockerfile` que compila la app y la sirve con
+nginx, así que en cualquier plataforma que soporte Docker (EasyPanel,
+Coolify, Railway, un VPS con Docker, etc.) solo tienes que apuntarla al
+repositorio o subir el código — no necesitas compilar nada a mano ni copiar
+la carpeta `dist/`.
 
-- **Con Nginx/Apache:** copia el contenido de `dist/` a la carpeta pública del
-  sitio (ej: `/var/www/mistarjetas`) y apunta el server block ahí.
+### En EasyPanel (paso a paso)
+
+1. Sube el proyecto a un repositorio de GitHub (o usa "Upload" en el
+   servicio para subir un .zip del proyecto tal cual, con el `Dockerfile`
+   incluido en la raíz).
+2. En tu proyecto de EasyPanel, crea un nuevo **App Service**.
+3. En **Source**, elige GitHub (o Upload) y selecciona el repositorio/carpeta
+   donde está el `Dockerfile`.
+4. EasyPanel detecta el `Dockerfile` automáticamente y lo usa para compilar
+   — no hace falta tocar "Build Command" ni "Nixpacks".
+5. En **Domains / Proxy**, configura el puerto a **80** (es el puerto que
+   expone nginx dentro del contenedor) y agrega tu dominio.
+6. Dale **Deploy**. En unos minutos tu app debe cargar bien.
+
+Si alguna vez ves una pantalla en blanco después de desplegar, revisa en las
+herramientas de desarrollador (pestaña Red) qué archivo está pidiendo el
+navegador: si pide `main.jsx` directo, significa que el código fuente se
+sirvió sin compilar (sin pasar por este Dockerfile) — vuelve a desplegar
+asegurándote de que EasyPanel esté usando el `Dockerfile` del proyecto.
+
+### Sin Docker (servidor propio con Nginx/Apache)
+
+Si prefieres no usar Docker, compílala tú mismo y sube solo el resultado:
+
+```bash
+npm install
+npm run build
+```
+
+Esto genera la carpeta `dist/` con archivos estáticos. Copia **el contenido**
+de `dist/` (no la carpeta completa del proyecto) a la carpeta pública de tu
+servidor, por ejemplo `/var/www/mistarjetas`.
+
 - **Si la vas a poner en una subcarpeta** (ej: `tudominio.com/tarjetas/`),
-  antes de compilar cambia en `vite.config.js` la línea `base: './'` — ya
-  viene configurada como ruta relativa así que debería funcionar tal cual en
-  subcarpetas también.
+  ya viene configurada como ruta relativa (`base: './'` en
+  `vite.config.js`), así que debería funcionar tal cual.
 - **Con Vercel/Netlify/GitHub Pages** también funciona: comando de build
   `npm run build`, carpeta de salida `dist`.
-
-No hay backend ni base de datos que instalar; es solo servir archivos estáticos.
 
 ## Próximos pasos posibles
 

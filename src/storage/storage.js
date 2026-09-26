@@ -9,6 +9,8 @@ const DEFAULT_DATA = {
   pin: null, // se define la primera vez que se usa la app
   cards: [],
   expenses: [],
+  fixedExpenses: [],
+  fixedLimit: 10000,
 };
 
 export function loadData() {
@@ -21,6 +23,8 @@ export function loadData() {
       ...parsed,
       cards: Array.isArray(parsed.cards) ? parsed.cards : [],
       expenses: Array.isArray(parsed.expenses) ? parsed.expenses : [],
+      fixedExpenses: Array.isArray(parsed.fixedExpenses) ? parsed.fixedExpenses : [],
+      fixedLimit: typeof parsed.fixedLimit === 'number' ? parsed.fixedLimit : DEFAULT_DATA.fixedLimit,
     };
   } catch (err) {
     console.error('No se pudo leer el almacenamiento local:', err);
@@ -56,6 +60,8 @@ export function importBackup(jsonText) {
     ...parsed,
     cards: Array.isArray(parsed.cards) ? parsed.cards : [],
     expenses: Array.isArray(parsed.expenses) ? parsed.expenses : [],
+    fixedExpenses: Array.isArray(parsed.fixedExpenses) ? parsed.fixedExpenses : [],
+    fixedLimit: typeof parsed.fixedLimit === 'number' ? parsed.fixedLimit : DEFAULT_DATA.fixedLimit,
   });
 }
 
@@ -83,4 +89,17 @@ export function getTheme() {
 
 export function setTheme(theme) {
   localStorage.setItem(THEME_KEY, theme);
+}
+
+// --- nombre del usuario (editable, se muestra en la cabecera) ---
+
+const NAME_KEY = 'mis-tarjetas:display-name';
+const DEFAULT_NAME = 'Sr. Anderson BM';
+
+export function getDisplayName() {
+  return localStorage.getItem(NAME_KEY) || DEFAULT_NAME;
+}
+
+export function setDisplayName(name) {
+  localStorage.setItem(NAME_KEY, name);
 }

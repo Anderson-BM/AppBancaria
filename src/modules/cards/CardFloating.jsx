@@ -16,7 +16,7 @@ export default function CardFloating({ card, onEdit }) {
       <div className="card-floating-glow" style={{ background: card.color }} />
       <button className="card-floating" onClick={onEdit} title="Editar tarjeta">
         {card.imageDataUrl ? (
-          <img src={card.imageDataUrl} alt={card.name} className="card-floating-img" />
+          <img src={card.imageDataUrl} alt={card.name} className="card-floating-img" loading="lazy" />
         ) : (
           <div
             className="card-floating-fallback"

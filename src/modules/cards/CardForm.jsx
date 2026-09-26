@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Modal from '../../components/Modal.jsx';
+import { processCardImage } from '../../utils/image.js';
 
 const COLOR_PRESETS = ['#1fb6ad', '#f5a623', '#5b7fff', '#e0615a', '#4fcf8f', '#a367e8'];
 
@@ -16,17 +17,26 @@ const emptyCard = {
 
 export default function CardForm({ initialCard, onSave, onDelete, onClose }) {
   const [form, setForm] = useState(initialCard ? { ...initialCard } : { ...emptyCard });
+  const [processingImage, setProcessingImage] = useState(false);
+  const [imageError, setImageError] = useState('');
 
   function update(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  function handleImage(e) {
+  async function handleImage(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => update('imageDataUrl', reader.result);
-    reader.readAsDataURL(file);
+    setImageError('');
+    setProcessingImage(true);
+    try {
+      const dataUrl = await processCardImage(file);
+      update('imageDataUrl', dataUrl);
+    } catch (err) {
+      setImageError('No se pudo procesar esa imagen. Intenta con otra foto.');
+    } finally {
+      setProcessingImage(false);
+    }
   }
 
   function handleSubmit(e) {
@@ -46,11 +56,16 @@ export default function CardForm({ initialCard, onSave, onDelete, onClose }) {
         <div className="field">
           <label>Imagen de la tarjeta</label>
           <input type="file" accept="image/*" onChange={handleImage} />
-          {form.imageDataUrl && (
+          <span className="field-hint">
+            Se recorta y ajusta automáticamente en HD para que quede completa, sin desbordarse.
+          </span>
+          {processingImage && <span className="field-hint">Procesando imagen…</span>}
+          {imageError && <span className="field-error">{imageError}</span>}
+          {form.imageDataUrl && !processingImage && (
             <img
               src={form.imageDataUrl}
               alt="preview"
-              style={{ width: '100%', borderRadius: 12, marginTop: 6 }}
+              className="card-form-preview"
             />
           )}
         </div>

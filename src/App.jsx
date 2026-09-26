@@ -16,8 +16,11 @@ import ExpenseTable from './modules/expenses/ExpenseTable.jsx';
 import SummaryCards from './modules/dashboard/SummaryCards.jsx';
 import CategoryBreakdown from './modules/dashboard/CategoryBreakdown.jsx';
 
-import { loadData, saveData, exportBackup } from './storage/storage.js';
+import { loadData, saveData, exportBackup, getDisplayName, setDisplayName } from './storage/storage.js';
 import { genId, currentMonthKey, monthKeyFromDate } from './utils/format.js';
+import EditableName from './components/EditableName.jsx';
+import BottomNav from './components/BottomNav.jsx';
+import FixedExpensesPage from './modules/fixed/FixedExpensesPage.jsx';
 
 export default function App() {
   const auth = useAuth();
@@ -41,6 +44,13 @@ function MainApp({ auth, theme, toggleTheme }) {
   const [data, setData] = useState(() => loadData());
   const [activeCardId, setActiveCardId] = useState(() => loadData().cards[0]?.id ?? null);
   const [monthKey, setMonthKey] = useState(currentMonthKey());
+  const [page, setPage] = useState('cards');
+  const [displayName, setDisplayNameState] = useState(() => getDisplayName());
+
+  function handleNameChange(name) {
+    setDisplayNameState(name);
+    setDisplayName(name);
+  }
 
   const [showCardForm, setShowCardForm] = useState(false);
   const [editingCard, setEditingCard] = useState(null);
@@ -119,7 +129,7 @@ function MainApp({ auth, theme, toggleTheme }) {
       <header className="app-header">
         <div>
           <p className="app-eyebrow">Hola de nuevo</p>
-          <h1>Mis Tarjetas</h1>
+          <EditableName value={displayName} onChange={handleNameChange} />
         </div>
         <div className="app-header-actions">
           <button className="icon-btn" onClick={toggleTheme} title="Cambiar tema">
@@ -134,44 +144,52 @@ function MainApp({ auth, theme, toggleTheme }) {
         </div>
       </header>
 
-      <CardFloating
-        card={activeCard}
-        onEdit={() => {
-          if (!activeCard) return;
-          setEditingCard(activeCard);
-          setShowCardForm(true);
-        }}
-      />
-
-      <CardSelector
-        cards={data.cards}
-        activeCardId={activeCardId}
-        onSelect={setActiveCardId}
-        onAdd={() => {
-          setEditingCard(null);
-          setShowCardForm(true);
-        }}
-      />
-
-      {activeCard ? (
+      {page === 'cards' ? (
         <>
-          <MonthSelector monthKey={monthKey} onChange={setMonthKey} />
-          <SummaryCards card={activeCard} totalSpent={totalSpent} />
-          <CategoryBreakdown expenses={monthExpenses} />
+          <CardFloating
+            card={activeCard}
+            onEdit={() => {
+              if (!activeCard) return;
+              setEditingCard(activeCard);
+              setShowCardForm(true);
+            }}
+          />
 
-          <div className="section-heading">
-            <h3>Movimientos</h3>
-            <button className="btn-add-expense" onClick={() => setShowExpenseForm(true)}>
-              + Gasto
-            </button>
-          </div>
-          <ExpenseTable expenses={monthExpenses} onDelete={handleDeleteExpense} />
+          <CardSelector
+            cards={data.cards}
+            activeCardId={activeCardId}
+            onSelect={setActiveCardId}
+            onAdd={() => {
+              setEditingCard(null);
+              setShowCardForm(true);
+            }}
+          />
+
+          {activeCard ? (
+            <>
+              <MonthSelector monthKey={monthKey} onChange={setMonthKey} />
+              <SummaryCards card={activeCard} totalSpent={totalSpent} />
+              <CategoryBreakdown expenses={monthExpenses} />
+
+              <div className="section-heading">
+                <h3>Movimientos</h3>
+                <button className="btn-add-expense" onClick={() => setShowExpenseForm(true)}>
+                  + Gasto
+                </button>
+              </div>
+              <ExpenseTable expenses={monthExpenses} onDelete={handleDeleteExpense} />
+            </>
+          ) : (
+            <div className="no-cards-hint">
+              <p>Agrega tu primera tarjeta para empezar a llevar el control.</p>
+            </div>
+          )}
         </>
       ) : (
-        <div className="no-cards-hint">
-          <p>Agrega tu primera tarjeta para empezar a llevar el control.</p>
-        </div>
+        <FixedExpensesPage data={data} setData={setData} />
       )}
+
+      <BottomNav page={page} onChange={setPage} />
 
       {showCardForm && (
         <CardForm

@@ -1,12 +1,6 @@
 import { useState } from 'react';
 import Modal from '../../components/Modal.jsx';
-
-const CATEGORIES = [
-  'Comida', 'Transporte', 'Servicios', 'Casa', 'Entretenimiento',
-  'Salud', 'Ropa', 'Combustible', 'Compromiso', 'Otros',
-];
-
-function todayIso() {
+import { CATEGORIES } from '../../utils/categories.js';function todayIso() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
